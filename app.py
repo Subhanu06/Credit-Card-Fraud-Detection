@@ -178,141 +178,156 @@ with tab_single:
 with tab_batch:
     st.subheader("📂 Batch Fraud Detection")
 
-    with st.container(border=True):
 
-        with st.expander("ℹ️ CSV Requirements", expanded=False):
-            st.markdown("""
-            Upload a CSV containing:
+    st.markdown("""
+    **CSV Requirements**
 
-            - `Time`
-            - `Amount`
-            - `V1` → `V28`
+    Upload a CSV containing:
 
-            The schema must match the original credit card dataset
-            (excluding the `Class` column).
-            """)
+    - Time
+    - Amount
+    - V1 → V28
 
-        uploaded = st.file_uploader(
-            "Upload transaction file",
-            type=["csv"],
-            help="Large files may take 1-3 minutes to process."
+    The file structure must match the original credit card dataset
+    (excluding the `Class` column).
+    """)
+
+    uploaded = st.file_uploader(
+        "Upload Transaction CSV",
+        type=["csv"]
+    )
+
+    if uploaded is not None:
+
+        st.info(
+            f"📄 {uploaded.name} • "
+            f"{uploaded.size / (1024 * 1024):.2f} MB"
         )
 
-        if uploaded is not None:
-
-            st.info(
-                f"📄 File detected: **{uploaded.name}** "
-                f"({uploaded.size / (1024*1024):.2f} MB)"
-            )
-
-            try:
+        # File Upload + Validation
+        try:
+            with st.spinner("📤 Uploading and validating file..."):
                 batch_df = pd.read_csv(uploaded)
 
-                st.success(
-                    f"✅ Loaded {len(batch_df):,} transactions successfully."
-                )
+        except Exception as e:
+            st.error(f"Could not read CSV: {e}")
+            st.stop()
 
-            except Exception as e:
-                st.error(f"Could not read CSV: {e}")
-                st.stop()
+        required_cols = (
+            {"Time", "Amount"}
+            | {f"V{i}" for i in range(1, 29)}
+        )
 
-            required_cols = {"Time", "Amount"} | {
-                f"V{i}" for i in range(1, 29)
-            }
+        missing_cols = required_cols - set(batch_df.columns)
 
-            missing_cols = required_cols - set(batch_df.columns)
-
-            if missing_cols:
-                st.error(
-                    f"Missing columns: {sorted(missing_cols)}"
-                )
-                st.stop()
-
-            progress_text = (
-                f"Analyzing {len(batch_df):,} transactions..."
+        if missing_cols:
+            st.error(
+                "Missing required columns:\n\n"
+                + ", ".join(sorted(missing_cols))
             )
+            st.stop()
 
-            progress_bar = st.progress(
-                0,
-                text=progress_text
-            )
+        st.success(
+            f"✅ Loaded {len(batch_df):,} transactions successfully"
+        )
 
-            try:
-                progress_bar.progress(
-                    25,
-                    text="Preparing data..."
-                )
-
-                progress_bar.progress(
-                    50,
-                    text="Running fraud detection model..."
-                )
-
+        # Model Prediction
+        try:
+            with st.spinner(
+                f"🔍 Analyzing {len(batch_df):,} transactions..."
+            ):
                 result = predict(batch_df)
 
-                progress_bar.progress(
-                    90,
-                    text="Generating report..."
-                )
+        except Exception as e:
+            st.error(f"Prediction failed: {e}")
+            st.stop()
 
-                progress_bar.progress(
-                    100,
-                    text="Analysis complete!"
-                )
+        # Metrics
+        n_fraud = (
+            result["prediction"] == "FRAUD"
+        ).sum()
 
-            except Exception as e:
-                st.error(f"Prediction failed: {e}")
-                st.stop()
+        fraud_rate = (
+            n_fraud / len(result) * 100
+        )
 
-            n_fraud = (
-                result["prediction"] == "FRAUD"
-            ).sum()
+        st.divider()
 
-            fraud_rate = (
-                n_fraud / len(result) * 100
+        st.markdown("## 📊 Analysis Summary")
+
+        col1, col2, col3 = st.columns(3)
+
+        col1.metric(
+            "Transactions",
+            f"{len(result):,}"
+        )
+
+        col2.metric(
+            "Frauds Detected",
+            f"{n_fraud:,}"
+        )
+
+        col3.metric(
+            "Fraud Rate",
+            f"{fraud_rate:.2f}%"
+        )
+
+        # Risk Assessment
+        st.markdown("### Risk Assessment")
+
+        if fraud_rate > 5:
+            st.error(
+                f"🔴 HIGH RISK • {n_fraud:,} suspicious transactions "
+                f"detected ({fraud_rate:.2f}% of total transactions)"
             )
 
-            st.markdown("### 📊 Analysis Summary")
-
-            c1, c2, c3 = st.columns(3)
-
-            c1.metric(
-                "Transactions",
-                f"{len(result):,}"
+        elif fraud_rate > 1:
+            st.warning(
+                f"🟡 MEDIUM RISK • {n_fraud:,} suspicious transactions "
+                f"detected ({fraud_rate:.2f}% of total transactions)"
             )
 
-            c2.metric(
-                "Fraud Detected",
-                f"{n_fraud:,}"
+        else:
+            st.success(
+                f"🟢 LOW RISK • {n_fraud:,} suspicious transactions "
+                f"detected ({fraud_rate:.2f}% of total transactions)"
             )
 
-            c3.metric(
-                "Fraud Rate",
-                f"{fraud_rate:.2f}%"
-            )
+        st.divider()
 
-            st.markdown("### 🚨 Highest Risk Transactions")
+        # Hidden Detailed Report
+        with st.expander(
+            "📑 View Detailed Report",
+            expanded=False
+        ):
+
+            st.markdown(
+                "### 🚨 Highest Risk Transactions"
+            )
 
             st.dataframe(
                 result.sort_values(
                     "prob_fraud",
                     ascending=False
-                ),
+                ).head(100),
                 use_container_width=True,
-                height=450,
+                height=450
             )
 
-            csv_out = result.to_csv(
-                index=False
-            ).encode("utf-8")
+            csv_out = (
+                result.to_csv(index=False)
+                .encode("utf-8")
+            )
 
             st.download_button(
                 "⬇️ Download Full Report",
                 data=csv_out,
                 file_name="fraud_predictions.csv",
                 mime="text/csv",
-                use_container_width=True,
+                use_container_width=True
             )
+
+
 
 # ── TAB 3: Model info ────────────────────────────────────────────────────────
 with tab_about:
