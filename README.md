@@ -49,11 +49,8 @@ Credit-Card-Fraud-Detection/
 │   └── credit_card_fraud_analysis.ipynb
 │
 ├── plots/
-│   ├── eda_plots.png
-│   └── threshold_plots.png
-│
-└── assets/
-    └── screenshots
+    ├── eda_plots.png
+    └── threshold_plots.png
 ```
 
 ---
