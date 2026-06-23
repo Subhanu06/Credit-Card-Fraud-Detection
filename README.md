@@ -1,20 +1,31 @@
 # 💳 Credit Card Fraud Detection System
 
-An end-to-end machine learning project for detecting fraudulent credit card transactions using advanced feature engineering, threshold optimization, and a deployed interactive Streamlit application.
+An end-to-end Machine Learning system for detecting fraudulent credit card transactions using advanced feature engineering, class imbalance handling, threshold optimization, and an interactive Streamlit web application.
 
 ---
 
-## 📌 Overview
+## 🚀 Live Demo
 
-Credit card fraud detection is a highly imbalanced classification problem where fraudulent transactions represent only a tiny fraction of total transactions.
+🔗 **Live Application:**
+https://credit-card-fraud-detection2026.streamlit.app/
+
+📂 **Source Code:**
+https://github.com/Subhanu06/Credit-Card-Fraud-Detection
+
+---
+
+## 📌 Project Overview
+
+Credit card fraud detection is one of the most challenging classification problems in machine learning due to the extreme imbalance between legitimate and fraudulent transactions.
 
 This project focuses on:
 
-- Detecting fraud with **high recall**
-- Reducing false negatives (missed fraud)
-- Building a deployable inference pipeline
-- Preventing data leakage
-- Optimizing decision thresholds for business needs
+* Detecting fraudulent transactions with high recall
+* Minimizing costly false negatives
+* Building a production-ready ML inference pipeline
+* Preventing data leakage during training
+* Optimizing classification thresholds for business requirements
+* Deploying the model through an interactive web application
 
 ---
 
@@ -22,13 +33,14 @@ This project focuses on:
 
 ```text
 Credit-Card-Fraud-Detection/
-│── app.py
-│── requirements.txt
-│── README.md
-│── .gitignore
-│── config.json
-│── model.pkl
-│── scaler.pkl
+│
+├── app.py
+├── requirements.txt
+├── README.md
+├── .gitignore
+├── config.json
+├── model.pkl
+├── scaler.pkl
 │
 ├── data/
 │   └── sample_data.csv
@@ -37,102 +49,122 @@ Credit-Card-Fraud-Detection/
 │   └── credit_card_fraud_analysis.ipynb
 │
 ├── plots/
-    ├── eda_plots.png
-    ├── threshold_plots.png
- 
+│   ├── eda_plots.png
+│   └── threshold_plots.png
+│
+└── assets/
+    └── screenshots
 ```
 
 ---
 
 ## 📊 Dataset
 
-Dataset used: **Credit Card Fraud Detection Dataset (Kaggle)**
+**Dataset:** Credit Card Fraud Detection Dataset (Kaggle)
 
-Contains:
+### Dataset Statistics
 
-- **284,807 transactions**
-- **492 fraud cases**
-- Highly imbalanced dataset (~0.172% fraud)
+| Metric                  | Value   |
+| ----------------------- | ------- |
+| Total Transactions      | 284,807 |
+| Fraudulent Transactions | 492     |
+| Legitimate Transactions | 284,315 |
+| Fraud Percentage        | 0.172%  |
 
-Features:
+### Features
 
-- `Time`
-- `Amount`
-- `V1–V28` (PCA-anonymized features)
-- `Class` (Target)
+* Time
+* Amount
+* V1 – V28 (PCA-transformed confidential features)
+* Class (Target Variable)
+
+The severe class imbalance makes accuracy an unreliable metric and requires specialized evaluation techniques.
 
 ---
 
 ## ⚙️ Feature Engineering
 
-This project uses custom engineered features to improve fraud detection.
+Several domain-inspired features were engineered to improve fraud detection performance.
 
-### Amount-based features
+### Amount-Based Features
 
-- `log_amount`
-- `amount_log_sq`
-- `is_round_amount`
-- `is_small_amount`
-- `amount_to_mean`
-- `is_high_amount`
+* log_amount
+* amount_log_sq
+* is_round_amount
+* is_small_amount
+* amount_to_mean
+* is_high_amount
 
-### Time-based features
+### Time-Based Features
 
-- `Hour`
-- `hour_of_day`
-- `hour_sin`
-- `hour_cos`
-- `is_night`
+* Hour
+* hour_of_day
+* hour_sin
+* hour_cos
+* is_night
 
-### Aggregated V-feature statistics
+### Aggregated Statistical Features
 
-- `v_sum_sq`
-- `v_max_abs`
+* v_sum_sq
+* v_max_abs
 
-Total engineered features: **43**
+### Total Features
+
+* Original Features: 30
+* Engineered Features: 13
+* Final Features Used: 43
 
 ---
 
-## 🤖 Model Pipeline
+## 🤖 Machine Learning Pipeline
 
-### Data preprocessing
+### Data Preprocessing
 
-- Train-test split
-- Robust scaling
-- Feature ordering preservation
-- Leakage-safe train statistics
+* Missing value validation
+* Train-test split
+* RobustScaler normalization
+* Feature order preservation
+* Leakage-safe feature generation
+* Statistical feature transformation
 
-### Models experimented
+### Models Evaluated
 
-- Logistic Regression
-- Random Forest
-- XGBoost
-- LightGBM
+* Logistic Regression
+* Random Forest Classifier
+* XGBoost Classifier
+* LightGBM Classifier
 
-### Hyperparameter optimization
+### Hyperparameter Optimization
 
-Implemented using **Optuna**
+Hyperparameter tuning was performed using Optuna.
 
-Optimization goal:
+Optimization Objectives:
 
-- Maximize recall
-- Maintain minimum precision
+* Maximize Recall
+* Maintain acceptable Precision
+* Improve Fraud Detection Rate
 
 ---
 
 ## 🏆 Final Model
 
-**XGBoost Classifier**
+### Selected Model
 
-Threshold tuned for fraud detection:
+XGBoost Classifier
+
+### Optimized Decision Threshold
 
 ```text
 0.0062
 ```
 
-Reason:
+Instead of using the default threshold of 0.5, the classification threshold was optimized to maximize fraud detection performance.
 
-Fraud detection prioritizes **high recall over precision**.
+This approach prioritizes:
+
+* Higher Recall
+* Lower Missed Fraud Cases
+* Better Business Protection
 
 ---
 
@@ -140,127 +172,167 @@ Fraud detection prioritizes **high recall over precision**.
 
 ### Default Threshold (0.5)
 
-| Metric | Fraud |
-|---|---:|
-| Precision | 0.95 |
-| Recall | 0.77 |
-| F1-score | 0.85 |
-
----
+| Metric    | Fraud Class |
+| --------- | ----------: |
+| Precision |        0.95 |
+| Recall    |        0.77 |
+| F1 Score  |        0.85 |
 
 ### Tuned Threshold (0.0062)
 
-| Metric | Fraud |
-|---|---:|
-| Precision | 0.55 |
-| Recall | 0.85 |
-| F1-score | 0.67 |
+| Metric    | Fraud Class |
+| --------- | ----------: |
+| Precision |        0.55 |
+| Recall    |        0.85 |
+| F1 Score  |        0.67 |
+
+### Performance Insight
+
+Threshold tuning significantly improves fraud detection capability by increasing recall and reducing missed fraudulent transactions.
 
 ---
 
-## 💼 Business Interpretation
+## 💼 Business Impact
 
-Threshold tuning improves fraud capture:
+Fraud detection systems generally prioritize recall over precision because missing a fraudulent transaction can be far more expensive than investigating a legitimate one.
 
-- Catches more fraudulent transactions
-- Reduces financial losses
-- Increases false positives (acceptable in fraud systems)
+### Benefits
 
-Tradeoff:
+* Increased fraud capture rate
+* Reduced financial losses
+* Improved customer protection
+* Better risk management
 
-- **Higher recall = fewer missed frauds**
-- **Lower precision = more manual reviews**
+### Trade-Off
 
----
+* Higher Recall → Fewer missed frauds
+* Lower Precision → More manual reviews
 
-## 🚀 Streamlit Deployment
-
-Interactive app supports:
-
-### Single Transaction Scoring
-
-Input:
-
-- Time
-- Amount
-- V1–V28
-
-Output:
-
-- Fraud probability
-- Final classification
+This trade-off is acceptable in many real-world fraud detection systems.
 
 ---
 
-### Batch CSV Scoring
+## 🌐 Streamlit Application
 
-Upload transaction CSV and get:
+The project includes a fully deployed interactive web application.
 
-- Fraud probability per transaction
-- Prediction labels
-- Downloadable results
+### Single Transaction Prediction
+
+Users can manually enter:
+
+* Time
+* Amount
+* V1–V28 Features
+
+The application returns:
+
+* Fraud Probability
+* Fraud Prediction
+* Confidence Score
+
+### Batch CSV Prediction
+
+Users can upload transaction datasets and receive:
+
+* Fraud probabilities
+* Predicted labels
+* Downloadable prediction results
 
 ---
 
-## 🛠 Tech Stack
+## 🛠 Technology Stack
 
-- Python
-- Pandas
-- NumPy
-- Scikit-learn
-- XGBoost
-- Streamlit
-- Optuna
+### Programming
+
+* Python
+
+### Data Processing
+
+* Pandas
+* NumPy
+
+### Machine Learning
+
+* Scikit-Learn
+* XGBoost
+* LightGBM
+* Optuna
+
+### Deployment
+
+* Streamlit
+* GitHub
 
 ---
 
-## ▶️ How to Run
+## ▶️ Installation & Usage
 
-Clone repository:
+### Clone Repository
 
 ```bash
 git clone https://github.com/Subhanu06/Credit-Card-Fraud-Detection.git
 cd Credit-Card-Fraud-Detection
 ```
 
-Install dependencies:
+### Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Run Streamlit:
+### Run Application
 
 ```bash
 streamlit run app.py
+```
+
+### Open Browser
+
+```text
+http://localhost:8501
 ```
 
 ---
 
 ## 📚 Key Learnings
 
-- Handling extreme class imbalance
-- Threshold optimization in fraud detection
-- Precision-recall tradeoffs
-- Preventing train-test leakage
-- Building reproducible ML pipelines
-- Deploying ML systems
+Through this project, I gained hands-on experience with:
+
+* Extreme class imbalance handling
+* Feature engineering techniques
+* Threshold optimization
+* Precision-recall trade-offs
+* Model evaluation for imbalanced datasets
+* Leakage prevention
+* Hyperparameter tuning with Optuna
+* End-to-end ML deployment using Streamlit
 
 ---
 
-## 🔮 Future Improvements
+## 🔮 Future Enhancements
 
-- SHAP explainability
-- Real-time API deployment
-- Ensemble stacking
-- Drift monitoring
-- Fraud severity tiers
-- Automated retraining
+* SHAP Explainability Dashboard
+* REST API Deployment
+* Real-Time Fraud Monitoring
+* Model Drift Detection
+* Ensemble Learning Techniques
+* Automated Model Retraining Pipeline
+* Cloud Deployment with Docker
 
 ---
 
 ## 👨‍💻 Author
 
-**Subhanu Dhar**
+### Subhanu Dhar
 
 GitHub: https://github.com/Subhanu06
+
+Project Repository:
+https://github.com/Subhanu06/Credit-Card-Fraud-Detection
+
+Live Application:
+https://credit-card-fraud-detection2026.streamlit.app/
+
+---
+
+⭐ If you found this project useful, consider giving the repository a star.
