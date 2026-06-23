@@ -176,53 +176,143 @@ with tab_single:
 
 # ── TAB 2: Batch CSV ─────────────────────────────────────────────────────────
 with tab_batch:
-    st.subheader("Score a batch of transactions")
-    st.write(
-        "Upload a CSV with columns `Time`, `Amount`, `V1`...`V28` "
-        "(same schema as `creditcard.csv`, minus the `Class` column)."
-    )
+    st.subheader("📂 Batch Fraud Detection")
 
-    uploaded = st.file_uploader("Upload CSV", type=["csv"])
+    with st.container(border=True):
 
-    if uploaded is not None:
-        try:
-            batch_df = pd.read_csv(uploaded)
-        except Exception as e:
-            st.error(f"Could not read CSV: {e}")
-            st.stop()
+        with st.expander("ℹ️ CSV Requirements", expanded=False):
+            st.markdown("""
+            Upload a CSV containing:
 
-        required_cols = {"Time", "Amount"} | {f"V{i}" for i in range(1, 29)}
-        missing_cols = required_cols - set(batch_df.columns)
-        if missing_cols:
-            st.error(f"CSV is missing required columns: {sorted(missing_cols)}")
-            st.stop()
+            - `Time`
+            - `Amount`
+            - `V1` → `V28`
 
-        with st.spinner(f"Scoring {len(batch_df):,} transactions..."):
+            The schema must match the original credit card dataset
+            (excluding the `Class` column).
+            """)
+
+        uploaded = st.file_uploader(
+            "Upload transaction file",
+            type=["csv"],
+            help="Large files may take 1-3 minutes to process."
+        )
+
+        if uploaded is not None:
+
+            st.info(
+                f"📄 File detected: **{uploaded.name}** "
+                f"({uploaded.size / (1024*1024):.2f} MB)"
+            )
+
             try:
+                batch_df = pd.read_csv(uploaded)
+
+                st.success(
+                    f"✅ Loaded {len(batch_df):,} transactions successfully."
+                )
+
+            except Exception as e:
+                st.error(f"Could not read CSV: {e}")
+                st.stop()
+
+            required_cols = {"Time", "Amount"} | {
+                f"V{i}" for i in range(1, 29)
+            }
+
+            missing_cols = required_cols - set(batch_df.columns)
+
+            if missing_cols:
+                st.error(
+                    f"Missing columns: {sorted(missing_cols)}"
+                )
+                st.stop()
+
+            progress_text = (
+                f"Analyzing {len(batch_df):,} transactions..."
+            )
+
+            progress_bar = st.progress(
+                0,
+                text=progress_text
+            )
+
+            try:
+                progress_bar.progress(
+                    25,
+                    text="Preparing data..."
+                )
+
+                progress_bar.progress(
+                    50,
+                    text="Running fraud detection model..."
+                )
+
                 result = predict(batch_df)
+
+                progress_bar.progress(
+                    90,
+                    text="Generating report..."
+                )
+
+                progress_bar.progress(
+                    100,
+                    text="Analysis complete!"
+                )
+
             except Exception as e:
                 st.error(f"Prediction failed: {e}")
                 st.stop()
 
-        n_fraud = (result["prediction"] == "FRAUD").sum()
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Transactions scored", f"{len(result):,}")
-        c2.metric("Flagged as fraud", f"{n_fraud:,}")
-        c3.metric("Flag rate", f"{n_fraud / len(result) * 100:.2f}%")
+            n_fraud = (
+                result["prediction"] == "FRAUD"
+            ).sum()
 
-        st.dataframe(
-            result.sort_values("prob_fraud", ascending=False),
-            use_container_width=True,
-            height=400,
-        )
+            fraud_rate = (
+                n_fraud / len(result) * 100
+            )
 
-        csv_out = result.to_csv(index=False).encode("utf-8")
-        st.download_button(
-            "Download scored CSV",
-            data=csv_out,
-            file_name="fraud_predictions.csv",
-            mime="text/csv",
-        )
+            st.markdown("### 📊 Analysis Summary")
+
+            c1, c2, c3 = st.columns(3)
+
+            c1.metric(
+                "Transactions",
+                f"{len(result):,}"
+            )
+
+            c2.metric(
+                "Fraud Detected",
+                f"{n_fraud:,}"
+            )
+
+            c3.metric(
+                "Fraud Rate",
+                f"{fraud_rate:.2f}%"
+            )
+
+            st.markdown("### 🚨 Highest Risk Transactions")
+
+            st.dataframe(
+                result.sort_values(
+                    "prob_fraud",
+                    ascending=False
+                ),
+                use_container_width=True,
+                height=450,
+            )
+
+            csv_out = result.to_csv(
+                index=False
+            ).encode("utf-8")
+
+            st.download_button(
+                "⬇️ Download Full Report",
+                data=csv_out,
+                file_name="fraud_predictions.csv",
+                mime="text/csv",
+                use_container_width=True,
+            )
 
 # ── TAB 3: Model info ────────────────────────────────────────────────────────
 with tab_about:
